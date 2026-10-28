@@ -7,6 +7,9 @@ on:
 
 jobs:
   check:
+    # Only the public repo: private repos' Actions minutes are billed, and the
+    # same commit is checked here once it is exported.
+    if: github.repository == 'naimulnashid/token-distribution'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
