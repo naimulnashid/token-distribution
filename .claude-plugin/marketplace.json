@@ -1,0 +1,6 @@
+{
+  "name": "token-distribution",
+  "owner": { "name": "naimulnashid" },
+  "description": "The token-distribution mod for Claude Code",
+  "plugins": [{ "name": "token-distribution", "source": "./" }]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "token-distribution",
+  "version": "0.1.0",
+  "description": "A pane showing the session's tokens by kind (input, output, cache read, cache write 5m and 1h) and how long each cache tier stays warm",
+  "types": "./types/index.d.ts",
+  "author": { "name": "naimulnashid" },
+  "license": "MIT",
+  "icon": "./assets/icon.png"
+}
