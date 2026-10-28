@@ -21,7 +21,7 @@ The figures are invented. The image is drawn by `node scripts/make-images.mjs`, 
 - The 5m/1h split of cache writes, which Claude Code's own usage figures do not report, read from the session's transcripts.
 - Subagents' requests included, with a count of how many responses came from them.
 - A **5m cache** and a **1h cache** countdown: time left, "Expired", or "Not written".
-- `/tokens` opens and closes the pane. A pane you close stays closed until you open it again, even when the mod reloads.
+- `/tokens` opens and closes the pane without adding anything to the chat. A pane you close stays closed until you open it again, even when the mod reloads.
 
 ## Installation
 
@@ -56,7 +56,7 @@ No configuration needed. The mod finds the session's transcripts under Claude Co
 ## Usage
 
 - The **Tokens** pane opens when a session starts. In the desktop app it docks beside the chat; in a terminal it docks in fullscreen mode, or sits above the prompt otherwise.
-- `/tokens` closes the pane if it is open and opens it if it is closed.
+- `/tokens` closes the pane if it is open and opens it if it is closed. It leaves the chat as it was: no reply, and the command's own line is drawn as nothing (the conversation still records it).
 - Closing the pane with its X or with `/tokens` keeps it closed for the rest of the session. A new session opens it again.
 - The figures cover the whole session, history from before a resume included. After `/clear` they start again from zero.
 - A timer restarts each time a request writes that tier or reads the cache while the tier is still alive.

@@ -110,14 +110,14 @@ test('/tokens closes an open pane and opens a closed one, and a close sticks', a
   expect(open.has('token-distribution')).toBe(true)
 
   const run = { command: 'tokens', args: '', origin: { kind: 'person' }, presentation: {} } as never
-  expect((await $.command.run(run)) as unknown).toMatchObject({ text: 'Token distribution pane closed.' })
+  expect(((await $.command.run(run)) as { text?: string }).text).toBeUndefined()
   expect(open.has('token-distribution')).toBe(false)
 
   // A reload runs session.start again; a pane the person closed stays closed.
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   expect(open.has('token-distribution')).toBe(false)
 
-  expect((await $.command.run(run)) as unknown).toMatchObject({ text: 'Token distribution pane opened.' })
+  expect(((await $.command.run(run)) as { text?: string }).text).toBeUndefined()
   expect(open.has('token-distribution')).toBe(true)
   // Let the scan the open started finish before the test ends.
   await clock.settle()
@@ -129,4 +129,38 @@ test('before any response the pane says so', async ($, on) => {
   expect(await ui.find({ type: 'Text', text: /No API responses yet/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^Not written$/ })).toBeDefined()
   await ui.unmount()
+})
+
+test('/tokens leaves the chat as it was: its rows draw nothing, other rows draw as ever', async ($, on) => {
+  // Stands for the engine's own drawing of a row the mod passes on.
+  on('ui.render', ($, e) => {
+    const { Text } = $.ui.resolve(e)
+    return <Text>engine</Text>
+  })
+  const user = (text: string) => ({
+    plugin: 'token-distribution',
+    component: 'UserMessage',
+    requestId: `m-${text}`,
+    props: { text, origin: { kind: 'person' }, isExpanded: false },
+  }) as const
+
+  for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
+    let ui = await $.ui.mount({ ...user('/tokens'), surface } as never)
+    expect(await ui.find({ type: 'Text' })).toBeUndefined()
+    await ui.unmount()
+
+    ui = await $.ui.mount({ ...user('how many tokens so far?'), surface } as never)
+    expect((await ui.find({ type: 'Text' }))?.text).toBe('engine')
+    await ui.unmount()
+
+    ui = await $.ui.mount({
+      plugin: 'token-distribution',
+      component: 'CommandOutput',
+      requestId: 'out-tokens',
+      props: { command: 'tokens', args: '', text: '', isErrored: false },
+      surface,
+    } as never)
+    expect(await ui.find({ type: 'Text' })).toBeUndefined()
+    await ui.unmount()
+  }
 })

@@ -237,15 +237,28 @@ export const register: Register = on => {
     return next(e)
   })
 
+  // No text: the pane opening or closing is the answer, so the chat gets no
+  // output row.
   on('command.run', { command: 'tokens' }, async $ => {
-    if (await read($, isOpen)) {
-      await $.ui.close({ id: PANE })
+    if (await read($, isOpen)) await $.ui.close({ id: PANE })
+    else await openPane($)
 
-      return { text: 'Token distribution pane closed.' }
-    }
-    await openPane($)
+    return {}
+  })
 
-    return { text: 'Token distribution pane opened.' }
+  // The engine records the typed `/tokens` and no hook may refuse the record,
+  // but its rows can be drawn as nothing, leaving the chat as it was.
+  on('ui.render', { component: 'UserMessage' }, ($, e, next) => {
+    if (e.props.text.trim() !== '/tokens') return next(e)
+    const { Box } = $.ui.resolve(e)
+
+    return <Box />
+  })
+
+  on('ui.render', { component: 'CommandOutput', props: { command: 'tokens' } }, ($, e) => {
+    const { Box } = $.ui.resolve(e)
+
+    return <Box />
   })
 
   on('ui.close', { id: PANE }, async ($, e, next) => {
