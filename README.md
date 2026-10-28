@@ -72,7 +72,7 @@ flowchart LR
   T[Session transcripts<br/>main + subagents] -->|new bytes since last offset| S[read-usage.mjs]
   S -->|usage per response| M[register.tsx]
   M -->|totals and timers| P[Tokens pane]
-  C[/tokens] --> M
+  C["/tokens"] --> M
 ```
 
 Every 3 seconds the module compares the transcripts' sizes, and runs the script only when one has grown. Each response is counted once, though a transcript stores it once per content block.
