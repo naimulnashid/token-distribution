@@ -1,5 +1,7 @@
 # <img src="assets/icon.svg" alt="Token Distribution icon: a donut split into five token colours, with clock hands in the middle, on a black tile" width="40" height="40" align="absmiddle"> Token Distribution
 
+[![CI](https://github.com/naimulnashid/token-distribution/actions/workflows/ci.yml/badge.svg)](https://github.com/naimulnashid/token-distribution/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/naimulnashid/token-distribution)](https://github.com/naimulnashid/token-distribution/releases/latest)
 [![MIT license](https://img.shields.io/github/license/naimulnashid/token-distribution)](LICENSE)
 
 A Claude Code mod that adds a **Tokens** pane beside the chat. It splits the session's tokens into input, output, cache read, cache write 5m and cache write 1h, and counts down how long each prompt cache tier stays warm.
@@ -45,7 +47,7 @@ claude plugin install token-distribution --marketplace naimulnashid/token-distri
 
 In the Claude desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `naimulnashid/token-distribution`, then **Add plugin**.
 
-There are no release builds: Claude Code installs the mod straight from this repository.
+There is nothing to download: Claude Code installs the mod straight from this repository. Versions are tagged under [Releases](https://github.com/naimulnashid/token-distribution/releases), with notes on what changed.
 
 ## Configuration
 
@@ -93,7 +95,7 @@ claude plugin validate .
 claude plugin test .
 ```
 
-`validate` reads the manifest and the hooks module as Claude Code will and lists what they hook and call. `test` runs `tests/pane.test.tsx` against Claude Code's own test kit.
+`validate` reads the manifest and the hooks module as Claude Code will and lists what they hook and call. `test` runs `tests/pane.test.tsx` against Claude Code's own test kit. CI (`.github/workflows/ci.yml`) runs both on every push to `main` and on pull requests, with the Claude Code version the mod was built against.
 
 To work on the mod live, start Claude Code with `claude --plugin-dir <this folder>`: saving a file reloads the mod. Claude Code writes the API's type declarations into `.claude-plugin/types/` when it loads the mod, and `tsconfig.json` extends them, so type-checking with `tsc -p .` works only after one load. There is no build step.
 
