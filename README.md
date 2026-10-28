@@ -99,7 +99,7 @@ claude plugin test .
 
 To work on the mod live, start Claude Code with `claude --plugin-dir <this folder>`: saving a file reloads the mod. Claude Code writes the API's type declarations into `.claude-plugin/types/` when it loads the mod, and `tsconfig.json` extends them, so type-checking with `tsc -p .` works only after one load. There is no build step.
 
-To redraw the icon PNG and the screenshots after changing `assets/icon.svg` or the pane's layout (needs Chrome or Edge; set `CHROME` to its executable if it is not found):
+To redraw the icon's PNG and Windows `.ico` (16 to 256 px) and the screenshots after changing `assets/icon.svg` or the pane's layout (needs Chrome or Edge; set `CHROME` to its executable if it is not found):
 
 ```bash
 node scripts/make-images.mjs

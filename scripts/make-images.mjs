@@ -1,5 +1,6 @@
 // Makes the repository's images with headless Chrome:
 //   assets/icon.png                  512 px, from assets/icon.svg (the plugin listing wants a PNG)
+//   assets/icon.ico                  16 to 256 px, each size drawn from the SVG, for Windows
 //   docs/screenshots/pane-dark.png   the Tokens pane in the desktop app's dark theme
 //   docs/screenshots/pane-light.png  the same in the light theme
 //
@@ -136,12 +137,75 @@ function shoot(html, out, width, height, scale) {
   console.log(`wrote ${out}`)
 }
 
+const ICO_SIZES = [16, 20, 24, 32, 40, 48, 64, 128, 256]
+
+// Draws the SVG at each size in a canvas and returns the PNGs. Each size is
+// rasterized from the vector at that size, never scaled down from a big
+// bitmap, so the 16 px frame stays as sharp as the format allows.
+function rasterize(svg, sizes) {
+  const page = join(work, 'raster.html')
+  writeFileSync(page, `<!doctype html><body><script>
+    const svg = ${JSON.stringify(svg)};
+    Promise.all(${JSON.stringify(sizes)}.map(size => new Promise((done, fail) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        canvas.getContext('2d').drawImage(img, 0, 0, size, size);
+        done(canvas.toDataURL('image/png').split(',')[1]);
+      };
+      img.onerror = fail;
+      const sized = svg.replace('<svg ', '<svg width="' + size + '" height="' + size + '" ');
+      img.src = 'data:image/svg+xml;base64,' + btoa(sized);
+    }))).then(pngs => { document.body.textContent = JSON.stringify(pngs); });
+  </script></body>`)
+  const dom = execFileSync(chrome, [
+    '--headless=new',
+    '--disable-gpu',
+    `--user-data-dir=${join(work, 'profile')}`,
+    // Lets the images load and the canvases draw before the DOM is printed.
+    '--virtual-time-budget=5000',
+    '--dump-dom',
+    pathToFileURL(page).href,
+  ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 })
+  const list = dom.match(/\[\s*"[^<]*"\s*\]/)
+  if (!list) throw new Error('Chrome did not draw the icon sizes.')
+  return JSON.parse(list[0]).map(b64 => Buffer.from(b64, 'base64'))
+}
+
+// An ICO holding PNG frames, which Windows reads from Vista on: a 6-byte
+// header, a 16-byte entry per frame, then the PNGs themselves.
+function ico(sizes, pngs) {
+  const header = Buffer.alloc(6)
+  header.writeUInt16LE(0, 0)
+  header.writeUInt16LE(1, 2)
+  header.writeUInt16LE(pngs.length, 4)
+  let offset = 6 + 16 * pngs.length
+  const entries = pngs.map((png, i) => {
+    const entry = Buffer.alloc(16)
+    const size = sizes[i] ?? 0
+    // A dimension of 256 is written as 0.
+    entry.writeUInt8(size >= 256 ? 0 : size, 0)
+    entry.writeUInt8(size >= 256 ? 0 : size, 1)
+    entry.writeUInt16LE(1, 4)
+    entry.writeUInt16LE(32, 6)
+    entry.writeUInt32LE(png.length, 8)
+    entry.writeUInt32LE(offset, 12)
+    offset += png.length
+    return entry
+  })
+  return Buffer.concat([header, ...entries, ...pngs])
+}
+
 try {
   const svg = readFileSync(join(ROOT, 'assets', 'icon.svg'), 'utf8')
   shoot(
     `<!doctype html><html><body style="margin:0;background:transparent">${svg.replace('<svg ', '<svg width="512" height="512" ')}</body></html>`,
     join(ROOT, 'assets', 'icon.png'), 512, 512, 1,
   )
+  const icoPath = join(ROOT, 'assets', 'icon.ico')
+  writeFileSync(icoPath, ico(ICO_SIZES, rasterize(svg, ICO_SIZES)))
+  console.log(`wrote ${icoPath}`)
   for (const theme of ['dark', 'light']) {
     shoot(paneHtml(theme), join(ROOT, 'docs', 'screenshots', `pane-${theme}.png`), 420, 372, 2)
   }
